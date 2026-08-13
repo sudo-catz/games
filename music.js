@@ -1053,7 +1053,7 @@ function startMusic() {
       return;
     }
     // 1s lookahead: ample buffer; when behind, SKIP stale steps (never burst)
-    while (musicNext < audioCtx.currentTime + 1.0) {
+    while (musicNext < audioCtx.currentTime + 2.0) {
       if (musicNext >= audioCtx.currentTime - 0.01) scheduleStep(musicStep, musicNext);
       if (tr.gen) { musicStep++; }
       else {
@@ -1115,9 +1115,8 @@ function toggleMusic() {
 }
 // pause in background tabs; re-claim playback when visible (mutes older tabs)
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
-  } else {
+  if (!document.hidden) {
+    try { localStorage.setItem('flappy-tab', myTabId); } catch (e) {}
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     if (musicGain && audioCtx) {
       musicGain.gain.setTargetAtTime(musicOn ? 0.9 : 0, audioCtx.currentTime, 0.3);
