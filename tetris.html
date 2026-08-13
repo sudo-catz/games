@@ -13,6 +13,7 @@ canvas { display:block; touch-action:none; border-radius:8px; box-shadow:0 12px 
 <body>
 <canvas id="game"></canvas>
 <script src="strings.js"></script>
+<script src="leaderboard.js"></script>
 <script src="music.js"></script>
 <script>
 (() => {
@@ -94,6 +95,7 @@ function gameOver() {
   over = true;
   newBest = score > best && score > 0;
   if (newBest) { best = score; localStorage.setItem('tetris-best', String(best)); }
+  if (score > 0 && window.LB) window.LB.submit('tetris', score);
   sfx('over');
 }
 

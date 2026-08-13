@@ -86,6 +86,51 @@ footer .dot { color: #35465c; margin: 0 6px; }
   .preview { width: 212px; height: 159px; }
 }
 </style>
+<style>
+.board {
+  width: min(560px, 92vw);
+  background: linear-gradient(180deg, #161f2c, #131a26);
+  border: 2px solid #223044; border-radius: 18px;
+  padding: 18px 20px 14px;
+  animation: cardIn .5s .3s ease-out both;
+}
+.board-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.board-head h3 { margin: 0; font-size: 14px; letter-spacing: 3px; color: #8fa3b8; }
+.board-head input {
+  flex: 1; min-width: 0; padding: 7px 10px; border-radius: 8px;
+  border: 1px solid #2a3542; background: #0d1219; color: #e8eef2;
+  font-size: 13px; font-family: inherit;
+}
+.board-head input:focus { outline: none; border-color: #4a7ce8; }
+.board-head button {
+  padding: 7px 14px; border-radius: 8px; border: 1px solid #2a3542;
+  background: #1a2432; color: #aebfd0; font-size: 12px; font-family: inherit;
+  cursor: pointer; transition: border-color .12s ease, color .12s ease;
+}
+.board-head button:hover { border-color: #4a7ce8; color: #e8eef2; }
+#scores { list-style: none; margin: 0; padding: 0; counter-reset: rank; }
+#scores li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px; border-radius: 8px; font-size: 13px;
+}
+
+#scores li:nth-child(odd) { background: rgba(255,255,255,.03); }
+#scores li.empty { color: #5d7488; justify-content: center; padding: 14px; }
+#scores li.me { background: rgba(255,217,59,.07); }
+#scores li .rk {
+  width: 22px; text-align: right; color: #5d7488; font-weight: 700;
+  counter-increment: rank;
+}
+#scores li .rk::before { content: counter(rank); }
+#scores li:nth-child(1) .rk { color: #ffd93b; }
+#scores li:nth-child(2) .rk { color: #c7d3dd; }
+#scores li:nth-child(3) .rk { color: #d98a4a; }
+#scores li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e8eef2; }
+#scores li .g { font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 2px 8px; border-radius: 6px; }
+#scores li .g.bird { background: rgba(74,124,232,.2); color: #7fa4f0; }
+#scores li .g.stack { background: rgba(176,107,232,.2); color: #c99bf0; }
+#scores li .sc { width: 74px; text-align: right; font-family: ui-monospace, monospace; font-weight: 700; color: #f2f6fa; }
+</style>
 </head>
 <body>
 <h1>GAME HUB</h1>
@@ -104,7 +149,16 @@ footer .dot { color: #35465c; margin: 0 6px; }
     <p>Clear lines, chase the level-up. Hold, ghost, lock delay, and full music.</p>
   </a>
 </div>
+<div class="board">
+  <div class="board-head">
+    <h3>LEADERBOARD</h3>
+    <input id="pname" maxlength="12" placeholder="your name" autocomplete="off" spellcheck="false">
+    <button id="refresh" type="button">refresh</button>
+  </div>
+  <ol id="scores"><li class="empty">loading&hellip;</li></ol>
+</div>
 <footer>everything synthesized<span class="dot">&#183;</span>no assets<span class="dot">&#183;</span>no dependencies<br>music &copy; original &middot; violin &amp; viola from VSCO 2 Community Edition (CC0)</footer>
+<script src="leaderboard.js"></script>
 <script>
 (() => {
   // ---------- Flappy preview: parallax sky, drifting clouds, pipe, flapping bird ----------
@@ -276,6 +330,35 @@ footer .dot { color: #35465c; margin: 0 6px; }
   }
   spawn();
   requestAnimationFrame(tetris);
+})();
+
+// ---------- leaderboard ----------
+(() => {
+  const list = document.getElementById('scores');
+  const input = document.getElementById('pname');
+  const btn = document.getElementById('refresh');
+  if (!window.LB) { list.innerHTML = '<li class="empty">leaderboard unavailable</li>'; return; }
+  input.value = window.LB.name();
+  input.addEventListener('input', () => window.LB.setName(input.value));
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  async function render() {
+    list.innerHTML = '<li class="empty">loading&hellip;</li>';
+    try {
+      const rows = await window.LB.fetchTop();
+      if (!rows.length) { list.innerHTML = '<li class="empty">no scores yet &mdash; go play</li>'; return; }
+      list.innerHTML = rows.map((r, i) => {
+        const me = r.n === window.LB.name() ? ' class="me"' : '';
+        const g = r.g === 'flappy' ? 'bird' : 'stack';
+        return '<li' + me + '><span class="rk"></span><span class="nm">' + esc(r.n) +
+          '</span><span class="g ' + g + '">' + (r.g === 'flappy' ? 'BIRD' : 'STACK') +
+          '</span><span class="sc">' + Number(r.s).toLocaleString() + '</span></li>';
+      }).join('');
+    } catch (e) {
+      list.innerHTML = '<li class="empty">offline &mdash; scores sync when online</li>';
+    }
+  }
+  btn.addEventListener('click', render);
+  render();
 })();
 </script>
 </body>

@@ -13,6 +13,7 @@ canvas { display:block; touch-action:none; border-radius:8px; box-shadow:0 12px 
 <body>
 <canvas id="game"></canvas>
 <script src="strings.js"></script>
+<script src="leaderboard.js"></script>
 <script>
 (() => {
 'use strict';
@@ -1266,7 +1267,8 @@ function die() {
                     color: i % 2 ? '#ffd93b' : '#fff3c4', type: 'feather' });
   }
   sfx('hit');
-  if (score > best) { best = score; localStorage.setItem('flappy-best', String(best)); }
+  if (score > best) { best = score; localStorage.setItem("flappy-best", String(best)); }
+  if (score > 0 && window.LB) window.LB.submit("flappy", score);
 }
 const DIFF_BTNS = DIFF_ORDER.map((d, i) => ({ d, x: 50 + i * 100, y: 432, w: 100, h: 40 }));
 function hitDiff(x, y) {
