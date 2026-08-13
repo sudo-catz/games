@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Hub</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127918;</text></svg>">
+<style>
+:root {
+  --bg: #0a0e15;
+  --card: #131a26;
+  --line: #223044;
+  --txt: #e8eef2;
+  --dim: #8fa3b8;
+  --yellow: #ffd93b;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(74,124,232,.10), transparent 60%),
+    radial-gradient(900px 500px at 85% 110%, rgba(176,107,232,.08), transparent 60%),
+    var(--bg);
+  color: var(--txt);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 40px; padding: 48px 16px; min-height: 100vh;
+}
+h1 {
+  font-size: 40px; letter-spacing: 6px; margin: 0; color: var(--yellow);
+  text-shadow: 0 3px 0 #8a5c00, 0 0 24px rgba(255,217,59,.35);
+  animation: titleIn .6s ease-out both;
+}
+.sub {
+  margin-top: 8px; text-align: center; font-size: 13px; color: var(--dim); letter-spacing: 1px;
+  animation: titleIn .6s .1s ease-out both;
+}
+.cards { display: flex; gap: 32px; flex-wrap: wrap; justify-content: center; }
+.card {
+  display: flex; flex-direction: column; align-items: center; gap: 16px; width: 300px;
+  padding: 22px 20px 26px; border-radius: 18px;
+  background: linear-gradient(180deg, #161f2c, var(--card));
+  border: 2px solid var(--line);
+  cursor: pointer; text-decoration: none; color: var(--txt);
+  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  position: relative; overflow: hidden;
+  animation: cardIn .5s ease-out both;
+}
+.card:nth-child(1) { animation-delay: .15s; }
+.card:nth-child(2) { animation-delay: .25s; }
+.card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%);
+  pointer-events: none;
+}
+.card:hover, .card:focus-visible {
+  transform: translateY(-6px);
+  border-color: var(--accent, #4a7ce8);
+  box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 18px color-mix(in srgb, var(--accent, #4a7ce8) 25%, transparent);
+  outline: none;
+}
+.card:active { transform: translateY(-2px); }
+.card h2 { margin: 0; font-size: 26px; letter-spacing: 1px; }
+.card p { margin: 0; font-size: 13px; color: var(--dim); text-align: center; line-height: 1.5; }
+.preview {
+  width: 240px; height: 180px; border-radius: 12px;
+  background: #0d1219; border: 1px solid var(--line);
+  image-rendering: auto;
+}
+.tag {
+  position: absolute; top: 12px; right: -34px; transform: rotate(38deg);
+  background: var(--accent, #4a7ce8); color: #0a0e15;
+  font-size: 11px; font-weight: 700; letter-spacing: 2px;
+  padding: 4px 34px;
+}
+footer {
+  font-size: 12px; color: #5d7488; text-align: center; line-height: 1.6;
+  animation: titleIn .6s .35s ease-out both;
+}
+footer .dot { color: #35465c; margin: 0 6px; }
+@keyframes titleIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+@keyframes cardIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@media (max-width: 680px) {
+  h1 { font-size: 30px; letter-spacing: 4px; }
+  .card { width: 260px; }
+  .preview { width: 212px; height: 159px; }
+}
+</style>
+</head>
+<body>
+<h1>GAME HUB</h1>
+<div class="sub">two games &middot; eleven generative music tracks &middot; zero downloads</div>
+<div class="cards">
+  <a class="card" href="flappy.html" style="--accent:#4a7ce8">
+    <span class="tag">BIRD</span>
+    <canvas class="preview" id="prevFlappy" width="240" height="180"></canvas>
+    <h2>Flappy Bird</h2>
+    <p>Dodge the pipes. Ramping difficulty, medals, and a music menu with every track.</p>
+  </a>
+  <a class="card" href="tetris.html" style="--accent:#b06be8">
+    <span class="tag">STACK</span>
+    <canvas class="preview" id="prevTetris" width="240" height="180"></canvas>
+    <h2>Tetris</h2>
+    <p>Clear lines, chase the level-up. Hold, ghost, lock delay, and full music.</p>
+  </a>
+</div>
+<footer>everything synthesized<span class="dot">&#183;</span>no assets<span class="dot">&#183;</span>no dependencies<br>music &copy; original &middot; violin &amp; viola from VSCO 2 Community Edition (CC0)</footer>
+<script>
+(() => {
+  // ---------- Flappy preview: parallax sky, drifting clouds, pipe, flapping bird ----------
+  const fc = document.getElementById('prevFlappy');
+  const fctx = fc.getContext('2d');
+  let ft = 0;
+  function flappy(now) {
+    ft += 0.016;
+    const W = 240, H = 180;
+    // sky
+    const sky = fctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#5fb9e0'); sky.addColorStop(1, '#a8e0f5');
+    fctx.fillStyle = sky; fctx.fillRect(0, 0, W, H);
+    // sun glow
+    fctx.fillStyle = 'rgba(255,240,180,.35)';
+    fctx.beginPath(); fctx.arc(200, 28, 22, 0, Math.PI * 2); fctx.fill();
+    // clouds
+    fctx.fillStyle = 'rgba(255,255,255,.85)';
+    for (let c = 0; c < 2; c++) {
+      const cx = ((160 * c + 260 - ft * 26) % 300) - 40;
+      const cy = 34 + c * 30;
+      fctx.beginPath();
+      fctx.ellipse(cx, cy, 22, 9, 0, 0, Math.PI * 2);
+      fctx.ellipse(cx + 16, cy - 5, 15, 8, 0, 0, Math.PI * 2);
+      fctx.fill();
+    }
+    // pipe
+    const px = 140 - ((ft * 70) % 190);
+    const gapY = 84, gapH = 56;
+    fctx.fillStyle = '#5aa832';
+    fctx.fillRect(px, 0, 44, gapY - gapH / 2);
+    fctx.fillRect(px, gapY + gapH / 2, 44, H - gapY - gapH / 2);
+    fctx.fillStyle = '#7ed34f';
+    fctx.fillRect(px + 4, 0, 8, gapY - gapH / 2);
+    fctx.fillRect(px + 4, gapY + gapH / 2, 8, H - gapY - gapH / 2);
+    fctx.fillStyle = '#3f7d22';
+    fctx.fillRect(px - 3, gapY - gapH / 2 - 14, 50, 14);
+    fctx.fillRect(px - 3, gapY + gapH / 2, 50, 14);
+    // ground
+    fctx.fillStyle = '#d9e07a';
+    fctx.fillRect(0, H - 26, W, 26);
+    fctx.fillStyle = '#9db64c';
+    fctx.fillRect(0, H - 26, W, 4);
+    fctx.fillStyle = '#7a8f38';
+    for (let g = 0; g < 14; g++) {
+      const gx = ((g * 22 - ft * 70) % 264 + 264) % 264 - 22;
+      fctx.fillRect(gx, H - 20, 12, 4);
+    }
+    // bird
+    const by = 78 + Math.sin(ft * 4.2) * 13;
+    const wing = Math.sin(ft * 22) > 0 ? -1 : 1;
+    fctx.fillStyle = '#ffd93b';
+    fctx.beginPath(); fctx.ellipse(76, by, 13, 10, -0.2, 0, Math.PI * 2); fctx.fill();
+    fctx.fillStyle = '#f5b500';
+    fctx.beginPath(); fctx.ellipse(70, by + 2, 8 * wing, 4, 0.3, 0, Math.PI * 2); fctx.fill();
+    fctx.fillStyle = '#fff';
+    fctx.beginPath(); fctx.arc(81, by - 3, 4, 0, Math.PI * 2); fctx.fill();
+    fctx.fillStyle = '#1c2733';
+    fctx.beginPath(); fctx.arc(82.5, by - 3, 2, 0, Math.PI * 2); fctx.fill();
+    fctx.fillStyle = '#f06a3c';
+    fctx.beginPath(); fctx.moveTo(87, by + 1); fctx.lineTo(93, by + 2.5); fctx.lineTo(87, by + 4); fctx.closePath(); fctx.fill();
+    requestAnimationFrame(flappy);
+  }
+  requestAnimationFrame(flappy);
+
+  // ---------- Tetris preview: real mini-simulation with line clears ----------
+  const tc = document.getElementById('prevTetris');
+  const tctx = tc.getContext('2d');
+  const COLS = 10, ROWS = 20, CELL = 8;
+  const shapes = {
+    I: [[1,1,1,1]], J: [[1,0,0],[1,1,1]], L: [[0,0,1],[1,1,1]], O: [[1,1],[1,1]],
+    S: [[0,1,1],[1,1,0]], T: [[0,1,0],[1,1,1]], Z: [[1,1,0],[0,1,1]]
+  };
+  const cols = { I:'#39d0e0', J:'#4a7ce8', L:'#f09a3c', O:'#ffd93b', S:'#62d95a', T:'#b06be8', Z:'#e84a6b' };
+  let grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  let piece = null, px = 3, py = 0, rot = 0, rotT = 0, fallT = 0, landT = 0, flash = 0, score = 0;
+  const names = Object.keys(shapes);
+  function spawn() {
+    const n = names[Math.floor(Math.random() * names.length)];
+    piece = n; px = 3 + Math.floor(Math.random() * (COLS - 4)); py = 0; rot = 0;
+  }
+  function place() {
+    const s = shapes[piece][rot % shapes[piece].length];
+    let row = -1;
+    for (let r = 0; r < s.length; r++) for (let c = 0; c < s[r].length; c++) {
+      if (s[r][c]) {
+        const gy = py + r, gx = px + c;
+        if (gy >= 0 && gy < ROWS) grid[gy][gx] = piece;
+        if (gy >= 0) row = Math.max(row, gy);
+      }
+    }
+    const full = [];
+    for (let r = 0; r < ROWS; r++) if (grid[r].every(v => v)) full.push(r);
+    if (full.length) { flash = 1; score += full.length * 100; }
+    else { for (let r = ROWS - 1; r >= 0; r--) {
+      const colIdx = grid[r].findIndex(v => v);
+      if (colIdx < 0) continue;
+      // merge rows upward when board nearly full
+    } }
+    if (flash === 0) {
+      // clear full rows
+      for (const r of full) { grid.splice(r, 1); grid.unshift(Array(COLS).fill(0)); }
+    }
+    spawn();
+  }
+  function tetris(now) {
+    fallT += 0.016;
+    rotT += 0.016;
+    landT += 0.016;
+    if (rotT > 1.3 && piece) { rotT = 0; rot = (rot + 1) % shapes[piece].length; }
+    if (fallT > 0.045 && piece) {
+      fallT = 0;
+      const s = shapes[piece][rot % shapes[piece].length];
+      let blocked = false;
+      for (let r = 0; r < s.length; r++) for (let c = 0; c < s[r].length; c++) {
+        if (s[r][c] && (py + r + 1 >= ROWS || (py + r + 1 >= 0 && grid[py + r + 1][px + c]))) blocked = true;
+      }
+      if (blocked) { place(); }
+      else py++;
+    }
+    if (flash > 0) { flash -= 0.02; if (flash <= 0) {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (grid[r].every(v => v)) { grid.splice(r, 1); grid.unshift(Array(COLS).fill(0)); r++; }
+      }
+    } }
+    // draw
+    const W = 240, H = 180;
+    const bx = (W - COLS * CELL) / 2, by = 8;
+    tctx.fillStyle = '#0d1219';
+    tctx.fillRect(0, 0, W, H);
+    tctx.strokeStyle = 'rgba(34,48,68,.8)';
+    tctx.strokeRect(bx - 1, by - 1, COLS * CELL + 2, ROWS * CELL + 2);
+    // faint grid
+    tctx.fillStyle = 'rgba(255,255,255,.03)';
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      if ((r + c) % 2 === 0) tctx.fillRect(bx + c * CELL, by + r * CELL, CELL - 1, CELL - 1);
+    }
+    // settled
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const v = grid[r][c];
+      if (v) {
+        tctx.fillStyle = cols[v];
+        tctx.globalAlpha = 0.55;
+        tctx.fillRect(bx + c * CELL + 1, by + r * CELL + 1, CELL - 2, CELL - 2);
+        tctx.globalAlpha = 1;
+        tctx.fillStyle = 'rgba(255,255,255,.25)';
+        tctx.fillRect(bx + c * CELL + 1, by + r * CELL + 1, CELL - 2, 2);
+      }
+    }
+    // falling piece
+    if (piece) {
+      const s = shapes[piece][rot % shapes[piece].length];
+      tctx.fillStyle = cols[piece];
+      for (let r = 0; r < s.length; r++) for (let c = 0; c < s[r].length; c++) {
+        if (s[r][c] && py + r >= 0) tctx.fillRect(bx + (px + c) * CELL + 1, by + (py + r) * CELL + 1, CELL - 2, CELL - 2);
+      }
+    }
+    // line clear flash
+    if (flash > 0) {
+      tctx.fillStyle = 'rgba(255,255,255,' + (flash * 0.8) + ')';
+      tctx.fillRect(bx, by, COLS * CELL, ROWS * CELL);
+    }
+    // score
+    tctx.fillStyle = '#8fa3b8';
+    tctx.font = '10px ui-monospace, monospace';
+    tctx.textAlign = 'right';
+    tctx.fillText(String(score).padStart(4, '0'), W - 10, 16);
+    requestAnimationFrame(tetris);
+  }
+  spawn();
+  requestAnimationFrame(tetris);
+})();
+</script>
+</body>
+</html>
