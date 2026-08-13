@@ -41,8 +41,8 @@ const PIECES = Object.keys(SHAPES);
 
 // ---------- state ----------
 let board, cur, next, score, lines, level, dropMs, over, paused, started;
+let best = Number(localStorage.getItem('tetris-best')) || 0, newBest = false;   // persisted best
 let hold = null, canHold = true;                 // hold slot
-const DAS = 160, ARR = 45;                        // delayed auto-shift ms
 const dirState = { left: false, right: false, down: false, last: null };
 let flash = 0, uiPulse = 0;
 let repeatTimer = null;
@@ -82,7 +82,7 @@ function restart() {
   stopRepeat();
   board = newBoard();
   score = 0; lines = 0; level = 1;
-  dropMs = 800;
+  newBest = false;
   nextDropAt = performance.now() + dropMs;
   lockAt = 0; lockResets = 0;
   over = false; paused = false;
@@ -92,6 +92,8 @@ function restart() {
 }
 function gameOver() {
   over = true;
+  newBest = score > best && score > 0;
+  if (newBest) { best = score; localStorage.setItem('tetris-best', String(best)); }
   sfx('over');
 }
 
@@ -447,35 +449,34 @@ function draw() {
   }
   // divider
   ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.beginPath(); ctx.moveTo(sx + 10, 238); ctx.lineTo(W - 10, 238); ctx.stroke();
-  // stats with pulse on clear
   const pulse = 1 + uiPulse * 0.16;
-  const stat = (lbl, val, y) => {
+  const stat = (lbl, val, y, col) => {
     ctx.fillStyle = '#8fa3b8';
     ctx.font = 'bold 10px Arial, sans-serif';
     ctx.fillText(lbl, sx + 10, y);
     ctx.save();
-    ctx.translate(sx + 10, y + 26);
+    ctx.translate(sx + 10, y + 24);
     ctx.scale(pulse, pulse);
-    ctx.fillStyle = '#f2f6fa';
-    ctx.font = 'bold 23px Arial, sans-serif';
+    ctx.fillStyle = col || '#f2f6fa';
+    ctx.font = 'bold 18px Arial, sans-serif';
     ctx.fillText(String(val), 0, 0);
     ctx.restore();
   };
-  stat('SCORE', score, 256);
-  stat('LEVEL', level, 316);
+  stat('SCORE', score, 250);
+  stat('BEST', best, 292, (score > best && score > 0) ? '#ffd93b' : undefined);
+  stat('LEVEL', level, 334);
   stat('LINES', lines, 376);
   // level progress
   const prog = (lines % 10) / 10;
   ctx.fillStyle = 'rgba(255,255,255,0.09)';
-  roundRect(sx + 10, 412, 70, 6, 3);
+  roundRect(sx + 10, 414, 70, 6, 3);
   ctx.fill();
   if (prog > 0) {
     const pg = ctx.createLinearGradient(sx + 10, 0, sx + 80, 0);
     pg.addColorStop(0, '#4a7ce8');
     pg.addColorStop(1, '#39d0e0');
     ctx.fillStyle = pg;
-    roundRect(sx + 10, 412, 70 * prog, 6, 3);
+    roundRect(sx + 10, 414, 70 * prog, 6, 3);
     ctx.fill();
   }
   // music status + key guide
@@ -558,12 +559,19 @@ function draw() {
     ctx.beginPath(); ctx.moveTo(W / 2 - 90, H / 2 - 24); ctx.lineTo(W / 2 + 90, H / 2 - 24); ctx.stroke();
     ctx.fillStyle = '#8fa3b8';
     ctx.font = 'bold 11px Arial, sans-serif';
-    ctx.fillText('SCORE', W / 2 - 44, H / 2 + 6);
-    ctx.fillText('LINES', W / 2 + 44, H / 2 + 6);
+    ctx.fillText('SCORE', W / 2 - 66, H / 2 + 6);
+    ctx.fillText('BEST', W / 2, H / 2 + 6);
+    ctx.fillText('LINES', W / 2 + 66, H / 2 + 6);
     ctx.fillStyle = '#f2f6fa';
-    ctx.font = 'bold 24px Arial, sans-serif';
-    ctx.fillText(String(score), W / 2 - 44, H / 2 + 34);
-    ctx.fillText(String(lines), W / 2 + 44, H / 2 + 34);
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.fillText(String(score), W / 2 - 66, H / 2 + 34);
+    ctx.fillText(String(best), W / 2, H / 2 + 34);
+    ctx.fillText(String(lines), W / 2 + 66, H / 2 + 34);
+    if (newBest && Math.floor(Date.now() / 500) % 2 === 0) {
+      ctx.fillStyle = '#ffd93b';
+      ctx.font = 'bold 14px Arial, sans-serif';
+      ctx.fillText('NEW BEST!', W / 2, H / 2 - 74);
+    }
     if (Math.floor(Date.now() / 500) % 2 === 0) {
       ctx.fillStyle = '#8fa3b8';
       ctx.font = '13px Arial, sans-serif';
@@ -623,7 +631,7 @@ requestAnimationFrame(frame);
 // Read-only test hook; enabled only via ?debug=1
 if (new URLSearchParams(location.search).get('debug') === '1') {
   window.__tetris = {
-    getState: () => ({ score, lines, level, over, paused, dropMs, hold, canHold,
+    getState: () => ({ score, lines, level, over, paused, dropMs, hold, canHold, best, newBest,
                        cur: cur ? { k: cur.k, x: cur.x, y: cur.y, rot: cur.rot } : null,
                        board: board.map(r => r.slice()),
                        musicRunning: window.Music ? window.Music.state().running : false,
