@@ -716,6 +716,7 @@ const JAZZ_CH_OPTS = [
   { ch: [57,60,64,67], root: 45, subs: [{ ch: [48,52,55,59], root: 36 }] },                              // Am -> Cmaj7
   { ch: [53,57,60,65], root: 41, subs: [{ ch: [50,53,57,60], root: 38 }] },                              // Fmaj7 -> Dm7
   { ch: [47,50,53,57], root: 35, subs: [{ ch: [52,56,59,62], root: 40 }] },                              // Bm7b5 -> E7
+  { ch: [52,56,59,62], root: 40, subs: [{ ch: [46,50,53,56], root: 34 }] }                               // E7 -> Bb7 tritone
 ];
 const JZ_SCALE = [57,59,60,62,64,65,67,69,71,72,74,76,77];
 // Mirage: sparse night piece — 5/4, ten eighths per bar
