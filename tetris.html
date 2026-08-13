@@ -84,6 +84,7 @@ function restart() {
   board = newBoard();
   score = 0; lines = 0; level = 1;
   newBest = false;
+  dropMs = 800;
   nextDropAt = performance.now() + dropMs;
   lockAt = 0; lockResets = 0;
   over = false; paused = false;
@@ -634,6 +635,7 @@ requestAnimationFrame(frame);
 if (new URLSearchParams(location.search).get('debug') === '1') {
   window.__tetris = {
     getState: () => ({ score, lines, level, over, paused, dropMs, hold, canHold, best, newBest,
+                       nextIn: +(nextDropAt - performance.now()).toFixed(0),
                        cur: cur ? { k: cur.k, x: cur.x, y: cur.y, rot: cur.rot } : null,
                        board: board.map(r => r.slice()),
                        musicRunning: window.Music ? window.Music.state().running : false,
