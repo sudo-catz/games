@@ -44,6 +44,7 @@ const PIECES = Object.keys(SHAPES);
 let board, cur, next, score, lines, level, dropMs, over, paused, started;
 let best = Number(localStorage.getItem('tetris-best')) || 0, newBest = false;   // persisted best
 let hold = null, canHold = true;                 // hold slot
+const DAS = 160, ARR = 45;                        // delayed auto-shift ms
 const dirState = { left: false, right: false, down: false, last: null };
 let flash = 0, uiPulse = 0;
 let repeatTimer = null;
@@ -452,6 +453,8 @@ function draw() {
   }
   // divider
   ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.beginPath(); ctx.moveTo(sx + 10, 238); ctx.lineTo(W - 10, 238); ctx.stroke();
+  // stats with pulse on clear
   const pulse = 1 + uiPulse * 0.16;
   const stat = (lbl, val, y, col) => {
     ctx.fillStyle = '#8fa3b8';
@@ -635,7 +638,6 @@ requestAnimationFrame(frame);
 if (new URLSearchParams(location.search).get('debug') === '1') {
   window.__tetris = {
     getState: () => ({ score, lines, level, over, paused, dropMs, hold, canHold, best, newBest,
-                       nextIn: +(nextDropAt - performance.now()).toFixed(0),
                        cur: cur ? { k: cur.k, x: cur.x, y: cur.y, rot: cur.rot } : null,
                        board: board.map(r => r.slice()),
                        musicRunning: window.Music ? window.Music.state().running : false,
